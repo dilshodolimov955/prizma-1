@@ -1,26 +1,73 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class CourseService {
-  create(createCourseDto: CreateCourseDto) {
-    return 'This action adds a new course';
+  constructor(private prisma: PrismaService) {}
+
+  async create(createCourseDto: CreateCourseDto) {
+    return await this.prisma.course.create({
+      data: createCourseDto,
+      include: { branch: true, groups: true },
+    });
   }
 
-  findAll() {
-    return `This action returns all course`;
+  async findAll(take = 10, skip = 0) {
+    return await this.prisma.course.findMany({
+      take,
+      skip,
+      include: { branch: true, groups: true },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} course`;
+  async findOne(id: number) {
+    const course = await this.prisma.course.findUnique({
+      where: { id },
+      include: { branch: true, groups: true },
+    });
+    if (!course) {
+      throw new NotFoundException(`Course #${id} topilmadi`);
+    }
+    return course;
   }
 
-  update(id: number, updateCourseDto: UpdateCourseDto) {
-    return `This action updates a #${id} course`;
+  async update(id: number, updateCourseDto: UpdateCourseDto) {
+    try {
+      const data: any = {};
+      if (updateCourseDto.name !== undefined) data.name = updateCourseDto.name;
+      if (updateCourseDto.price !== undefined) data.price = updateCourseDto.price;
+      if (updateCourseDto.durationMonth !== undefined) data.durationMonth = updateCourseDto.durationMonth;
+      if (updateCourseDto.durationHours !== undefined) data.durationHours = updateCourseDto.durationHours;
+      if (updateCourseDto.level !== undefined) data.level = updateCourseDto.level;
+      if (updateCourseDto.branchId !== undefined) data.branchId = updateCourseDto.branchId;
+      if (updateCourseDto.status !== undefined) data.status = updateCourseDto.status;
+
+      return await this.prisma.course.update({
+        where: { id },
+        data,
+        include: { branch: true, groups: true },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Course #${id} topilmadi`);
+      }
+      throw error;
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} course`;
+  async remove(id: number) {
+    try {
+      return await this.prisma.course.delete({
+        where: { id },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Course #${id} topilmadi`);
+      }
+      throw error;
+    }
   }
 }

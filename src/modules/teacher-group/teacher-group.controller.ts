@@ -1,9 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { TeacherGroupService } from './teacher-group.service';
 import { CreateTeacherGroupDto } from './dto/create-teacher-group.dto';
 import { UpdateTeacherGroupDto } from './dto/update-teacher-group.dto';
 
-@Controller('teacher-group')
+@Controller('teacher-groups')
 export class TeacherGroupController {
   constructor(private readonly teacherGroupService: TeacherGroupService) {}
 
@@ -13,22 +23,28 @@ export class TeacherGroupController {
   }
 
   @Get()
-  findAll() {
-    return this.teacherGroupService.findAll();
+  findAll(
+    @Query('take', new ParseIntPipe({ optional: true })) take?: number,
+    @Query('skip', new ParseIntPipe({ optional: true })) skip?: number,
+  ) {
+    return this.teacherGroupService.findAll(take || 10, skip || 0);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.teacherGroupService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.teacherGroupService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTeacherGroupDto: UpdateTeacherGroupDto) {
-    return this.teacherGroupService.update(+id, updateTeacherGroupDto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateTeacherGroupDto: UpdateTeacherGroupDto,
+  ) {
+    return this.teacherGroupService.update(id, updateTeacherGroupDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.teacherGroupService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.teacherGroupService.remove(id);
   }
 }

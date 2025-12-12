@@ -1,4 +1,8 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateTeacherDto } from './create-teacher.dto';
-
-export class UpdateTeacherDto extends PartialType(CreateTeacherDto) {}
+export class UpdateTeacherDto {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+  photo?: string;
+  status?: 'ACTIVE' | 'INACTIVE';
+}

@@ -1,26 +1,70 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class RoomService {
-  create(createRoomDto: CreateRoomDto) {
-    return 'This action adds a new room';
+  constructor(private prisma: PrismaService) {}
+
+  async create(createRoomDto: CreateRoomDto) {
+    return await this.prisma.room.create({
+      data: createRoomDto,
+      include: { branch: true, groups: true },
+    });
   }
 
-  findAll() {
-    return `This action returns all room`;
+  async findAll(take = 10, skip = 0) {
+    return await this.prisma.room.findMany({
+      take,
+      skip,
+      include: { branch: true, groups: true },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} room`;
+  async findOne(id: number) {
+    const room = await this.prisma.room.findUnique({
+      where: { id },
+      include: { branch: true, groups: true },
+    });
+    if (!room) {
+      throw new NotFoundException(`Room #${id} topilmadi`);
+    }
+    return room;
   }
 
-  update(id: number, updateRoomDto: UpdateRoomDto) {
-    return `This action updates a #${id} room`;
+  async update(id: number, updateRoomDto: UpdateRoomDto) {
+    try {
+      const data: any = {};
+      if (updateRoomDto.name !== undefined) data.name = updateRoomDto.name;
+      if (updateRoomDto.capacity !== undefined) data.capacity = updateRoomDto.capacity;
+      if (updateRoomDto.branchId !== undefined) data.branchId = updateRoomDto.branchId;
+      if (updateRoomDto.status !== undefined) data.status = updateRoomDto.status;
+
+      return await this.prisma.room.update({
+        where: { id },
+        data,
+        include: { branch: true, groups: true },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Room #${id} topilmadi`);
+      }
+      throw error;
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} room`;
+  async remove(id: number) {
+    try {
+      return await this.prisma.room.delete({
+        where: { id },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException(`Room #${id} topilmadi`);
+      }
+      throw error;
+    }
   }
 }

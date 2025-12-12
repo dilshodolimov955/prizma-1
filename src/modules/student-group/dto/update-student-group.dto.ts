@@ -1,4 +1,5 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateStudentGroupDto } from './create-student-group.dto';
-
-export class UpdateStudentGroupDto extends PartialType(CreateStudentGroupDto) {}
+export class UpdateStudentGroupDto {
+  studentId?: number;
+  groupId?: number;
+  status?: 'ACTIVE' | 'INACTIVE';
+}
